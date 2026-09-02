@@ -738,7 +738,7 @@ Les durées exactes sont à définir en fonction de la réglementation applicabl
 
 ## 18. Plan de reprise d'activité (PRA)
 
-Le système doit disposer d'un site secondaire permettant de reprendre les services critiques en cas de sinistre majeur du site principal.
+Le système doit disposer d'au moins un site secondaire permettant de reprendre les services critiques en cas de sinistre majeur du site principal.
 
 ```text
               SITE PRINCIPAL

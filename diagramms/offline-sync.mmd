@@ -1,0 +1,37 @@
+sequenceDiagram
+    participant A as Agent communal
+    participant APP as Application locale
+    participant DB as Base locale chiffrée
+    participant O as Outbox
+    participant S as Service Sync national
+    participant API as API / Validation
+    participant PG as PostgreSQL HA
+
+    A->>APP: Saisir acte
+    APP->>DB: Transaction locale
+    APP->>O: Ajouter événement
+    DB-->>APP: Acte enregistré
+    APP-->>A: Confirmation locale
+
+    Note over A,PG: Connexion indisponible : les opérations restent PENDING
+
+    APP->>O: Détecter événements en attente
+    O->>S: Envoyer eventId + payload
+    S->>API: Authentifier / valider
+    API->>PG: Vérifier idempotence + version
+
+    alt Opération valide
+        PG-->>API: Transaction commit
+        API-->>S: ACK
+        S-->>O: Marquer CONFIRMED
+    else Événement déjà traité
+        PG-->>API: eventId déjà connu
+        API-->>S: ACK idempotent
+        S-->>O: Marquer CONFIRMED
+    else Conflit
+        API-->>S: CONFLICT
+        S-->>O: Mettre en résolution
+    else Erreur temporaire
+        API-->>S: RETRY
+        S-->>O: Backoff + nouvelle tentative
+    end

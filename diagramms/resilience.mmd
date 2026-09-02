@@ -1,0 +1,52 @@
+flowchart TB
+    USERS["Utilisateurs / Citoyens"]
+    LB["Load Balancer"]
+
+    subgraph PROD["Site primaire"]
+        A1["API #1"]
+        A2["API #2"]
+        A3["API #N"]
+
+        DBP["PostgreSQL Primary"]
+        DBS["PostgreSQL Standby"]
+        MQ["Message Broker Cluster"]
+        OBJ["Object Storage"]
+    end
+
+    subgraph DR["Site secondaire"]
+        DBR["PostgreSQL DR"]
+        OBJR["Object Storage DR"]
+        APPDR["Services DR"]
+    end
+
+    BACKUP["Backup chiffré + PITR"]
+    IMMUT["Backup immuable / WORM"]
+    MON["Monitoring / Alerting"]
+
+    USERS --> LB
+    LB --> A1
+    LB --> A2
+    LB --> A3
+
+    A1 --> DBP
+    A2 --> DBP
+    A3 --> DBP
+
+    A1 --> MQ
+    A2 --> MQ
+    A3 --> MQ
+
+    DBP -->|réplication| DBS
+    DBP -->|réplication asynchrone| DBR
+    OBJ -->|réplication| OBJR
+
+    DBP --> BACKUP
+    BACKUP --> IMMUT
+
+    A1 -.-> MON
+    A2 -.-> MON
+    A3 -.-> MON
+    DBP -.-> MON
+    MQ -.-> MON
+
+    DBR --> APPDR

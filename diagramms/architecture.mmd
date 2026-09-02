@@ -1,0 +1,76 @@
+flowchart TB
+    CIT["Citoyens"]
+    AG["Agents des mairies"]
+
+    subgraph EDGE["Accès Internet"]
+        CDN["CDN / Cache"]
+        WAF["WAF"]
+        LB["Load Balancer"]
+        GW["API Gateway"]
+    end
+
+    subgraph APP["Plateforme nationale"]
+        IAM["IAM / OIDC / MFA"]
+        ACT["Service Actes"]
+        REF["Service Référentiels"]
+        USR["Service Utilisateurs"]
+        SYNC["Service Synchronisation"]
+        MQ["Event Bus / Message Broker"]
+    end
+
+    subgraph DATA["Données"]
+        DB["PostgreSQL HA"]
+        REDIS["Redis"]
+        OBJ["Object Storage"]
+        ARCH["Archivage immuable / WORM"]
+    end
+
+    subgraph LOCAL["Commune à connectivité dégradée"]
+        LAPP["Application locale"]
+        LDB["Base locale chiffrée"]
+        OUTBOX["Outbox / Sync Queue"]
+    end
+
+    subgraph OBS["Observabilité / Sécurité"]
+        LOG["Centralisation des logs"]
+        SIEM["SIEM"]
+        MET["Metrics / Alerting"]
+        TR["Distributed Tracing"]
+    end
+
+    subgraph DR["Site secondaire / PRA"]
+        DBR["PostgreSQL DR"]
+        OBJR["Object Storage DR"]
+    end
+
+    CIT --> CDN --> WAF --> LB --> GW
+    AG --> WAF
+
+    GW --> IAM
+    GW --> ACT
+    GW --> REF
+    GW --> USR
+
+    ACT --> DB
+    ACT --> REDIS
+    ACT --> MQ
+    REF --> DB
+    USR --> DB
+
+    MQ --> SYNC
+    MQ --> OBJ
+    OBJ --> ARCH
+
+    DB --> DBR
+    OBJ --> OBJR
+
+    LAPP --> LDB
+    LAPP --> OUTBOX
+    OUTBOX --> SYNC
+
+    GW -.-> LOG
+    IAM -.-> SIEM
+    ACT -.-> LOG
+    ACT -.-> MET
+    ACT -.-> TR
+    SYNC -.-> LOG
